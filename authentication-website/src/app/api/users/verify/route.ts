@@ -1,38 +1,28 @@
 import { connect } from "@/database/config";
 import { NextRequest, NextResponse } from "next/server";
 import User from "@/model/userModel";
-import { createHash } from "crypto";
+import { jsonError, readJsonBody, serverError } from "@/helper/apiResponse";
+import { hashToken } from "@/helper/token";
 
 export async function POST(request: NextRequest) {
     try {
-        await connect();
-
-        const reqBody = await request.json();
-        const { token } = reqBody;
+        const body = await readJsonBody(request);
+        const token = typeof body.token === "string" ? body.token.trim() : "";
 
         if (!token) {
-            return NextResponse.json(
-                { error: "Token is required" },
-                { status: 400 }
-            );
+            return jsonError("Token is required", 400);
         }
 
-        // Hash the received token
-        const hashedToken = createHash("sha256")
-            .update(token)
-            .digest("hex");
+        await connect();
 
-        // Find user using hashed token
+        // Find user using the hashed token that has not expired
         const user = await User.findOne({
-            verifyToken: hashedToken,
-            verifyTokenExpiry: { $gt: Date.now() }
+            verifyToken: hashToken(token),
+            verifyTokenExpiry: { $gt: new Date() },
         });
 
         if (!user) {
-            return NextResponse.json(
-                { error: "Invalid or expired token" },
-                { status: 400 }
-            );
+            return jsonError("Invalid or expired verification link", 400);
         }
 
         // Verify user
@@ -44,19 +34,9 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({
             message: "Email verified successfully",
-            success: true
+            success: true,
         });
-
     } catch (error: unknown) {
-        console.error("Verification Error:", error);
-
-        return NextResponse.json(
-            {
-                error: error instanceof Error
-                    ? error.message
-                    : "Something went wrong"
-            },
-            { status: 500 }
-        );
+        return serverError("Verification Error", error);
     }
 }

@@ -1,21 +1,46 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-export async function connect() {
-    try {
-        mongoose.connect(process.env.MONGO_URL!);
-        const connection = mongoose.connection;
+interface MongooseCache {
+    connection: typeof mongoose | null;
+    promise: Promise<typeof mongoose> | null;
+}
 
-        connection.on('connected', () => {
-            console.log('MongoDB connected successfully');
-        })
+// Keep the cache on globalThis so hot reloads in development
+// do not create a new connection (and new listeners) on every request.
+const globalForMongoose = globalThis as typeof globalThis & {
+    mongooseCache?: MongooseCache;
+};
 
-        connection.on('error', (err) => {
-            console.log('MongoDB connection error. Please make sure MongoDB is running. ' + err);
-            process.exit();
-        })
+if (!globalForMongoose.mongooseCache) {
+    globalForMongoose.mongooseCache = { connection: null, promise: null };
+}
 
-    } catch (error) {
-        console.log('Something goes wrong!');
-        console.log(error);  
+const cache = globalForMongoose.mongooseCache;
+
+export async function connect(): Promise<typeof mongoose> {
+    const mongoUrl = process.env.MONGO_URL;
+
+    if (!mongoUrl) {
+        throw new Error("MONGO_URL is not configured");
     }
+
+    // Reuse the existing connection
+    if (cache.connection) {
+        return cache.connection;
+    }
+
+    // Start connecting only once, even if many requests arrive together
+    if (!cache.promise) {
+        cache.promise = mongoose.connect(mongoUrl, { bufferCommands: false });
+    }
+
+    try {
+        cache.connection = await cache.promise;
+    } catch (error) {
+        // Allow the next request to try again
+        cache.promise = null;
+        throw error;
+    }
+
+    return cache.connection;
 }

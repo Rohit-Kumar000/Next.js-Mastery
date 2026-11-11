@@ -1,97 +1,67 @@
-
 import { connect } from "@/database/config";
 import User from "@/model/userModel";
 import { NextRequest, NextResponse } from "next/server";
 import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { jsonError, readJsonBody, serverError } from "@/helper/apiResponse";
+import { normalizeEmail } from "@/helper/validation";
+import { AUTH_TOKEN_TTL_SECONDS, setAuthCookie } from "@/helper/authCookie";
 
 export async function POST(request: NextRequest) {
     try {
-        await connect();
+        const body = await readJsonBody(request);
 
-        const reqBody = await request.json();
-        const { email, password } = reqBody;
+        // Only accept strings so objects can never reach the database query
+        const email = typeof body.email === "string" ? normalizeEmail(body.email) : "";
+        const password = typeof body.password === "string" ? body.password : "";
 
         // Validate input
         if (!email || !password) {
-            return NextResponse.json(
-                { error: "Email and password are required" },
-                { status: 400 }
-            );
+            return jsonError("Email and password are required", 400);
         }
 
-        // Check if user exists
+        // Check JWT secret
+        const tokenSecret = process.env.TOKEN_SECRET;
+
+        if (!tokenSecret) {
+            throw new Error("TOKEN_SECRET is not configured");
+        }
+
+        await connect();
+
         const user = await User.findOne({ email });
 
-        if (!user) {
-            return NextResponse.json(
-                { error: "User does not exist" },
-                { status: 400 }
-            );
+        // Same message for a wrong email and a wrong password,
+        // so nobody can find out which emails are registered
+        const validPassword = user
+            ? await bcryptjs.compare(password, user.password)
+            : false;
+
+        if (!user || !validPassword) {
+            return jsonError("Invalid email or password", 401);
         }
-
-        // Check if email is verified
-        if (!user.isVerified) {
-            return NextResponse.json(
-                { error: "Please verify your email before login" },
-                { status: 400 }
-            );
-        }
-
-        // Check password
-        const validPassword = await bcryptjs.compare(
-            password,
-            user.password
-        );
-
-        if (!validPassword) {
-            return NextResponse.json(
-                { error: "Invalid password" },
-                { status: 400 }
-            );
-        }
-
-        // Create token data
-        const tokenData = {
-            id: user._id.toString(),
-            username: user.username,
-            email: user.email,
-        };
 
         // Generate JWT
         const token = jwt.sign(
-            tokenData,
-            process.env.TOKEN_SECRET!,
-            { expiresIn: "1d" }
+            {
+                id: user._id.toString(),
+                username: user.username,
+                email: user.email,
+            },
+            tokenSecret,
+            { expiresIn: AUTH_TOKEN_TTL_SECONDS }
         );
 
-        // Create response
         const response = NextResponse.json({
             message: "Login successful",
             success: true,
+            isVerified: user.isVerified,
         });
 
-        // Set cookie
-        response.cookies.set("token", token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            path: "/",
-            maxAge: 60 * 60 * 24,
-        });
+        setAuthCookie(response, token);
 
         return response;
-
     } catch (error: unknown) {
-        console.error("Login Error:", error);
-
-        return NextResponse.json(
-            {
-                error: error instanceof Error
-                    ? error.message
-                    : "Something went wrong",
-            },
-            { status: 500 }
-        );
+        return serverError("Login Error", error);
     }
 }

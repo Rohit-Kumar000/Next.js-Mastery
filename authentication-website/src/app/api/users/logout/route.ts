@@ -1,30 +1,13 @@
 import { NextResponse } from "next/server";
+import { clearAuthCookie } from "@/helper/authCookie";
 
-export async function GET() {
-    try {
-        const response = NextResponse.json({
-            message: "Logout successful",
-            success: true,
-        });
+export async function POST() {
+    const response = NextResponse.json({
+        message: "Logout successful",
+        success: true,
+    });
 
-        response.cookies.set("token", "", {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            path: "/",
-            expires: new Date(0),
-        });
+    clearAuthCookie(response);
 
-        return response;
-
-    } catch (error: unknown) {
-        return NextResponse.json(
-            {
-                error: error instanceof Error
-                    ? error.message
-                    : "Something went wrong",
-            },
-            { status: 500 }
-        );
-    }
+    return response;
 }
