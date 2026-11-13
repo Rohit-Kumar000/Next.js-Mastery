@@ -65,12 +65,12 @@ export default function SignInForm() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-800">
-      <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow-md">
+    <div className="flex flex-1 items-center justify-center bg-gray-800 px-4 py-8">
+      <div className="w-full max-w-md space-y-6 rounded-lg bg-white p-6 shadow-md sm:space-y-8 sm:p-8">
 
         <div className="text-center">
-          <h1 className="mb-6 text-4xl font-extrabold tracking-tight lg:text-5xl">
-            Welcome Back to True Feedback
+          <h1 className="mb-4 text-3xl font-extrabold tracking-tight sm:mb-6 sm:text-4xl">
+            Welcome back to Messanger
           </h1>
 
           <p className="mb-4">

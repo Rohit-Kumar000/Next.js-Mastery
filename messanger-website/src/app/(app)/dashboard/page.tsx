@@ -151,8 +151,6 @@ function UserDashboard() {
         (message) => String(message._id) !== messageId
       )
     );
-
-    toast.success('Message deleted');
   };
 
   // Handle accept messages switch
@@ -210,7 +208,7 @@ function UserDashboard() {
   // Loading session
   if (status === 'loading') {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex flex-1 items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -222,12 +220,12 @@ function UserDashboard() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 px-4 py-8">
-      <div className="mx-auto w-full max-w-6xl rounded-xl bg-white p-6 shadow-sm md:p-8">
+    <main className="flex-1 bg-gray-50 px-3 py-6 sm:px-4 sm:py-8">
+      <div className="mx-auto w-full max-w-6xl rounded-xl bg-white p-4 shadow-sm sm:p-6 md:p-8">
 
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900 md:text-4xl">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl md:text-4xl">
             User Dashboard
           </h1>
 
@@ -261,7 +259,7 @@ function UserDashboard() {
               }
               disabled
               readOnly
-              className="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none"
+              className="w-full min-w-0 truncate rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-700 outline-none"
             />
 
             <Button
@@ -279,7 +277,7 @@ function UserDashboard() {
 
         {/* Message Settings */}
         <section className="my-6">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <h2 className="text-lg font-semibold text-gray-900">
                 Accept Messages

@@ -2,30 +2,41 @@ import dbConnect from '@/lib/dbConnect';
 import UserModel from '@/model/User';
 import bcrypt from 'bcryptjs';
 import { sendVerificationEmail } from '@/helper/sendVerificationEmail';
+import { signUpSchema } from '@/schema/signUpSchema';
+import { randomInt } from 'node:crypto';
 
 export async function POST(request: Request) {
-  await dbConnect();
-
   try {
-    const { username, email, password } = await request.json();
+    await dbConnect();
+    const input = signUpSchema.safeParse(await request.json());
+    if (!input.success) {
+      return Response.json({ success: false, message: input.error.issues[0]?.message ?? 'Please check your sign-up details.' }, { status: 400 });
+    }
+    const { username, email, password } = input.data;
+
+    const usernameQuery = new RegExp(`^${username}$`, 'i');
+
+    // Release usernames held by abandoned (never verified) sign-ups from other emails.
+    await UserModel.deleteMany({
+      username: usernameQuery,
+      isVerified: false,
+      email: { $ne: email },
+    });
 
     const existingVerifiedUserByUsername = await UserModel.findOne({
-      username,
+      username: usernameQuery,
       isVerified: true,
     });
 
     if (existingVerifiedUserByUsername) {
       return Response.json(
-        {
-          success: false,
-          message: 'Username is already taken',
-        },
+        { success: false, message: 'Username is already taken' },
         { status: 400 }
       );
     }
 
     const existingUserByEmail = await UserModel.findOne({ email });
-    const verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const verifyCode = randomInt(100000, 1000000).toString();
 
     if (existingUserByEmail) {
       if (existingUserByEmail.isVerified) {
@@ -38,6 +49,7 @@ export async function POST(request: Request) {
         );
       } else {
         const hashedPassword = await bcrypt.hash(password, 10);
+        existingUserByEmail.username = username;
         existingUserByEmail.password = hashedPassword;
         existingUserByEmail.verifyCode = verifyCode;
         existingUserByEmail.verifyCodeExpiry = new Date(Date.now() + 3600000);

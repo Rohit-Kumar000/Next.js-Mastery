@@ -34,21 +34,21 @@ export default function Home() {
 
   return (
     <>
-      <main className="flex min-h-[calc(100vh-64px)] flex-col items-center justify-center bg-gray-800 px-4 py-12 text-white md:px-24">
+      <main className="flex flex-1 flex-col items-center justify-center bg-gray-800 px-4 py-10 text-white sm:py-12 md:px-24">
 
         {/* Hero Section */}
         <section className="mb-10 text-center md:mb-12">
-          <h1 className="text-3xl font-bold leading-tight md:text-5xl">
-            Dive into the World of Anonymous Feedback
+          <h1 className="text-3xl font-bold leading-tight sm:text-4xl md:text-5xl">
+            Share a link. Get honest messages.
           </h1>
 
           <p className="mt-4 text-base text-gray-300 md:text-lg">
-            True Feedback - Where your identity remains a secret.
+            Messanger lets friends send you anonymous messages, privately and on your terms.
           </p>
         </section>
 
         {/* Messages Carousel */}
-        <section className="w-full max-w-lg md:max-w-xl">
+        <section className="w-full max-w-lg overflow-hidden md:max-w-xl md:overflow-visible">
           <Carousel
             plugins={[autoplayPlugin]}
             opts={{
@@ -87,8 +87,8 @@ export default function Home() {
               ))}
             </CarouselContent>
 
-            <CarouselPrevious />
-            <CarouselNext />
+            <CarouselPrevious className="hidden md:inline-flex" />
+            <CarouselNext className="hidden md:inline-flex" />
           </Carousel>
         </section>
 

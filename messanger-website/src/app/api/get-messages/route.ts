@@ -1,31 +1,30 @@
 import dbConnect from '@/lib/dbConnect';
 import UserModel from '@/model/User';
 import mongoose from 'mongoose';
-import { User } from 'next-auth';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]/options';
 
 export async function GET() {
-  await dbConnect();
   const session = await getServerSession(authOptions);
-  const _user: User = session?.user;
+  const _user = session?.user;
 
-  if (!session || !_user) {
+  if (!_user) {
     return Response.json(
       { success: false, message: 'Not authenticated' },
       { status: 401 }
     );
   }
-  const userId = new mongoose.Types.ObjectId(_user._id);
   try {
-    const user = await UserModel.aggregate([
-      { $match: { _id: userId } },
-      { $unwind: '$messages' },
-      { $sort: { 'messages.createdAt': -1 } },
-      { $group: { _id: '$_id', messages: { $push: '$messages' } } },
-    ]).exec();
+    if (!_user._id || !mongoose.isValidObjectId(_user._id)) {
+      return Response.json(
+        { success: false, message: 'Not authenticated' },
+        { status: 401 }
+      );
+    }
+    await dbConnect();
+    const user = await UserModel.findById(_user._id).select('messages').lean();
 
-    if (!user || user.length === 0) {
+    if (!user) {
       return Response.json(
         { message: 'User not found', success: false },
         { status: 404 }
@@ -33,7 +32,7 @@ export async function GET() {
     }
 
     return Response.json(
-      { messages: user[0].messages },
+      { messages: (user.messages ?? []).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()) },
       {
         status: 200,
       }

@@ -5,8 +5,8 @@ import { useState } from 'react';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import { X, Loader2 } from 'lucide-react';
-import { Message } from '@/model/User';
-import { ApiResponse } from '@/types/ApiResponse';
+import type { Message } from '@/model/User';
+import type { ApiResponse } from '@/types/ApiResponse';
 
 import {
   Card,

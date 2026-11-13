@@ -115,12 +115,12 @@ export default function SignUpForm() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-800">
-      <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow-md">
+    <div className="flex flex-1 items-center justify-center bg-gray-800 px-4 py-8">
+      <div className="w-full max-w-md space-y-6 rounded-lg bg-white p-6 shadow-md sm:space-y-8 sm:p-8">
 
         <div className="text-center">
-          <h1 className="mb-6 text-4xl font-extrabold tracking-tight lg:text-5xl">
-            Join True Feedback
+          <h1 className="mb-4 text-3xl font-extrabold tracking-tight sm:mb-6 sm:text-4xl">
+            Join Messanger
           </h1>
 
           <p className="mb-4">
@@ -146,6 +146,8 @@ export default function SignUpForm() {
                 <Input
                   {...field}
                   id="username"
+                  autoComplete="username"
+                  placeholder="Choose a username"
                   aria-invalid={fieldState.invalid}
                   onChange={(e) => {
                     field.onChange(e);
@@ -190,6 +192,8 @@ export default function SignUpForm() {
                   {...field}
                   id="email"
                   type="email"
+                  autoComplete="email"
+                  placeholder="you@example.com"
                   aria-invalid={fieldState.invalid}
                 />
 
@@ -218,6 +222,8 @@ export default function SignUpForm() {
                   {...field}
                   id="password"
                   type="password"
+                  autoComplete="new-password"
+                  placeholder="At least 6 characters"
                   aria-invalid={fieldState.invalid}
                 />
 

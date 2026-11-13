@@ -1,18 +1,21 @@
 import UserModel from '@/model/User';
+import mongoose from 'mongoose';
 import { getServerSession } from 'next-auth/next';
 import dbConnect from '@/lib/dbConnect';
-import { User } from 'next-auth';
 import { authOptions } from '../../auth/[...nextauth]/options';
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { messageid: string } }
+  { params }: { params: Promise<{ messageid: string }> }
 ) {
-  const messageId = params.messageid;
+  const { messageid: messageId } = await params;
+  if (!mongoose.isValidObjectId(messageId)) {
+    return Response.json({ success: false, message: 'Invalid message ID' }, { status: 400 });
+  }
   await dbConnect();
   const session = await getServerSession(authOptions);
-  const _user: User = session?.user;
-  if (!session || !_user) {
+  const _user = session?.user;
+  if (!_user?._id) {
     return Response.json(
       { success: false, message: 'Not authenticated' },
       { status: 401 }

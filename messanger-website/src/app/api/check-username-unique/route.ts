@@ -35,7 +35,7 @@ export async function GET(request: Request) {
     const { username } = result.data;
 
     const existingVerifiedUser = await UserModel.findOne({
-      username,
+      username: new RegExp(`^${username}$`, 'i'),
       isVerified: true,
     });
 

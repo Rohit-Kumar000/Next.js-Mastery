@@ -5,23 +5,21 @@ type ConnectionObject = {
 };
 
 const connection: ConnectionObject = {};
+let connectionPromise: Promise<void> | undefined;
 
 async function dbConnect(): Promise<void> {
-  // Check if we have a connection to the database or if it's currently connecting
-  if (connection.isConnected) {
-    console.log('Already connected to the database');
-    return;
-  }
-
-  try {
-    // Attempt to connect to the database
-    const db = await mongoose.connect(process.env.MONGODB_URI || '', {});
-    connection.isConnected = db.connections[0].readyState;
-    console.log('Database connected successfully');
-  } catch (error) {
-    console.error('Database connection failed:', error);
-    process.exit(1);
-  }
+  if (connection.isConnected === 1 && mongoose.connection.readyState === 1) return;
+  if (connectionPromise) return connectionPromise;
+  const uri = process.env.MONGODB_URI;
+  if (!uri) throw new Error('MONGODB_URI is not configured. Add it to .env.local.');
+  connectionPromise = mongoose.connect(uri)
+    .then(() => { connection.isConnected = mongoose.connection.readyState; })
+    .catch((error: unknown) => {
+      connection.isConnected = 0;
+      throw error;
+    })
+    .finally(() => { connectionPromise = undefined; });
+  return connectionPromise;
 }
 
 export default dbConnect;

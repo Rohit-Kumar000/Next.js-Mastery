@@ -4,6 +4,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import dbConnect from '@/lib/dbConnect';
 import UserModel from '@/model/User';
+import { escapeRegExp } from '@/lib/escapeRegExp';
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -30,10 +31,11 @@ export const authOptions: NextAuthOptions = {
         await dbConnect();
 
         try {
+          const identifier = credentials.identifier.trim();
           const user = await UserModel.findOne({
             $or: [
-              { email: credentials.identifier },
-              { username: credentials.identifier },
+              { email: identifier.toLowerCase() },
+              { username: new RegExp(`^${escapeRegExp(identifier)}$`, 'i') },
             ],
           });
 
@@ -57,9 +59,12 @@ export const authOptions: NextAuthOptions = {
           }
 
           return {
-            ...user.toObject(),
             id: user._id.toString(),
             _id: user._id.toString(),
+            email: user.email,
+            username: user.username,
+            isVerified: user.isVerified,
+            isAcceptingMessages: user.isAcceptingMessages,
           };
         } catch (err: unknown) {
           if (err instanceof Error) {
