@@ -150,4 +150,8 @@ Found a bug or have an idea? Open an [issue](https://github.com/Rohit-Kumar000/N
 
 <sub>Built with ❤️ using Next.js</sub>
 
+<<<<<<< HEAD
 </div>
+=======
+</div>
+>>>>>>> 879d847aae8c3d6f18783b169a1bbdb3dd0b2070
